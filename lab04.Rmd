@@ -122,20 +122,36 @@ Your code should do the following things:
 You will need to do this for each value of $k$ you investigate.  For today, you can organize this in any way that makes sense to you.  Options include using two nested for loops where one iterates over the values of $k$ you're looking at and the other iterates over cross-validation folds; manually doing steps b, c, and d for each model within a single for loop; or repeating your whole block of code multiple times, once for each value of $k$.
 
 ```{r}
-val_mse <- rep(NA, 5)
-for(i in seq_len(5)) {
-  glass_val_train <- glass %>% slice(-crossval_val_fold_inds[[i]])
-  glass_val_val <- glass %>% slice(crossval_val_fold_inds[[i]])
-  glass_val <- glass %>% slice(crossval_val_fold_inds[[i]])
+num_cross_folds <- 10
+train_val_mse <- data.frame(
+  val_fold_num = seq(1,10,by=1),
+  val_mse = rep(NA,10)
+)
 
-  y_hat_trans <- predict(knn_fit, newdata = glass_val)
-  val_mse[i] <- mean((glass_val$fev - y_hat_trans)^2)
+for (i in seq_len(num_cross_folds)){
+  glass_train <- train_glass %>% slice(-crossval_val_fold_inds[[i]])
+  glass_val <- train_glass %>% slice(crossval_val_fold_inds[[i]])
+  knn_fit <- train(
+    form = type ~ Al + Na,
+    data = train_glass,
+    method = "knn",
+    preProcess = "scale",
+    trControl = trainControl(method = "none"),
+    tuneGrid = data.frame(k=25))
+
+
+y_hats <- predict(knn_fit, newdata = test_glass, type = "raw")
+head(y_hats)
+mean(y_hats != test_glass$type)
+train_val_mse$val_mse[i] <- mean(y_hats != test_glass$type)
 }
-mean(val_mse)
-```
+train_val_mse
 
+```
+I am not sure why I have the same val mse
 #### 4. Using your selected value of $k$ from cross-validation, refit your KNN model to the full training set and get the test set error rate.  How does your performance compare to what you'd get if you just predicted the most common class in the training set?
 
 ```{r}
+mean(y_hats != test_glass$type)
 
 ```
